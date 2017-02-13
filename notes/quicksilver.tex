@@ -26,7 +26,10 @@ We investigate running queries on encrypted data on public clouds using partial 
 \end{abstract}
 
 \section{Introduction}
-
+Given the encryption and decryption function, and the query (or Spark program) 
+on the client-side, we find an equivalent program which can be run on the encrypted
+data on the untrusted server, such that we do not leak any data from the 
+query or its execution on the server. 
 \section{Common Encryption Functions}
 \subsection{Caesar Cipher}
 Encryption function is :
