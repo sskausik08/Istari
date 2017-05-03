@@ -1,0 +1,159 @@
+\documentclass[]{article}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xspace}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{cleveref}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usetikzlibrary{calc,automata,positioning}
+\def\istari{\textsc{Istari}\xspace}
+\usepackage{float}
+%opening
+\input{defs}
+\title{Distributed Verification of Quantitative Network Properties}
+
+\author{Kausik Subramanian, Loris D'Antoni, Aditya Akella}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We investigate distributed verification and synthesis in 
+networks related to quantitative network policies.
+\end{abstract}
+
+\section{Introduction}
+One of the key challenges of designing networks is verifying
+how good the network performs. This is further complicated 
+by the fact that these networks are highly prone to failures
+and variable traffic demands. One of the common failure scenarios
+used to evaluate the network design and strategy is to quantify 
+the relevant metrics like congestion under the occurence  
+of $t$ arbitrary link failures. While this is effective to understand
+the worst-case performance of the network, the probability
+of two links failing need not be uniform, and thus, we would 
+want to estimate the expected value of the metric, given
+link failure probabilities. Similarily, the traffic characteristics
+modelled as a distribution can help us provide a realistic
+metric to evaluate the network, rather than using the tail
+characteristic for worst-case analysis.
+
+\section{Limitations of Existing Work}
+Two works try to answer some of the questions pertaining to
+quantitative properties of the network. In this section, we 
+will describe the approach and their limitations.
+
+\paragraph{Probabilistic NetKAT}
+Probabilistic NetKAT~\cite{probnetkat, probnetkatpopl17} 
+is an extension of NetKAT with support
+for probabilistic routing behaviors, for e.g., a switch 
+can forward traffic to one of its neighbors based on a 
+probability distribution. This can be used to express different
+routing strategies like ECMP, multi-path routing and 
+oblivious TE. The language supports queries 
+on these programs like expected congestion and latency. ProbNetKAT
+handles link failures by modelling the link as a program
+which probabilistically drops a packet (link failure
+probability).
+
+However, the ProbNetKAT language is not powerful enough to 
+express more complex routing strategies which react to failures. 
+The simplest example is a OSPF network, where traffic is 
+forwarded along the shortest weighted path between the endpoints. 
+When a link fails, the network recomputes the paths based on the 
+functioning network topology. ProbNetKAT cannot be used to express
+the OSPF routing strategy. Traffic engineering strategies which adapt 
+to failures to minimize an objective like MPLS tunneling also 
+cannot be expressed using ProbNetKAT. Also, it is not clear 
+if the approaches used in ProbNetKAT scale to larger networks 
+and workloads.
+
+\paragraph{Robust Validation of Network Designs}
+Chang et. al~\cite{robustvalidation} propose a framework 
+to validate network design under failures and uncertain demands. 
+The framework formulates the validation problem as an 
+optimization problem: to find the maximum value a metric can
+achieve under a set of link failure scenarios. An example 
+metric is the Maximum Link Utilisation. Importantly,
+this framework allows the specification of routing strategies
+which adapt based on the current network topology: Multi-commodity
+flow routing and MPLS-stlye tunneling. 
+
+The limitation of this framework is that it performs a 
+worst-case analysis of the network by finding the maximum value 
+achieved by the metric. For example, if worst-case 
+MLU of the network is $> 1$,
+it means that under a certain set of link failures, the network is
+oversubscribed. However, the occurence of this particular scenario
+could be highly improbable, and the cost of repairing the 
+oversubscription may not be reap significant benefits. 
+Thus, an useful metric
+to validate the network design is to 
+compute expected MLU based on the 
+link failure probability distributions. 
+Computing expected 
+MLU in the framework 
+would incur an expotential blowup due to the
+enumeration of failure scenarios.
+
+\section{Problem Statement}
+\paragraph{Input.} We are provided as input a 
+network topology $T=(V,L)$, an adaptive 
+routing strategy $R(T_f)$
+parameterized over the current functioning topology $T_f$
+which decides the paths taken by the traffic classes
+in $T_f$. Let us define the 
+set of traffic classes $\Lambda 
+\subseteq V \times V$. For each $\lambda \in \Lambda$,
+we are given a traffic probability 
+distribution function 
+$\omega(\lambda)$
+(discrete or continous?). To quantify behavior under
+failures, we have a link failure probability function
+$\mu: L \rightarrow [0,1]$. Let us define $X$ to be 
+the set of failure scenarios (bounded by $k$ links).
+
+\paragraph{Output.} Let us define the
+metric $M$ which takes an input a topology and a routing 
+strategy; it returns a 
+real number (for example, max link utilization). 
+The question is as follows: for a given $T$ and $R$,
+can we compute: 
+\[
+	E[M] = \sum_{x \in X} \mu(x). M(T_x, R(T_x))
+\]
+
+\paragraph{Verification Approach.} The naive brute-force 
+approach is to enumerate all link failures $x \in X$
+and compute $M(T_x, R(T_x)$, which can then be aggregated to 
+compute $E[M]$. This process is highly parallelisable (each 
+$x$ can be potentially run on a different machine). Thus, we
+propose a distributed verification framework to speed and 
+scale up the queries. The other aspect to investigate is 
+how to partition the set of failures $x \in X$ across
+ the machines such that each partition can be computed
+ efficiently. This could involve approximations with 
+ provable guarantees on the distance from the actual 
+ value computed for the partition. The other aspect 
+ is to leverage the link failure probability function
+ $\mu$ to avoid enumerating all possible link failures. 
+
+\paragraph{Synthesis.} While it is useful for operators
+to compute metrics to validate network design, operators need
+to repair the network (by changing routing strategies, or 
+provisioning new links) to ensure the metric does not violate
+a certain threshold (for e.g. a cloud provider can provide 
+an SLO of 99.99\% availability). Thus, we investigate 
+if we can suggest repairs along with the verification computation
+in a distributed manner. 
+ 
+\bibliographystyle{abbrv} 
+\begin{small}
+	\bibliography{refs}
+\end{small}
+
+\end{document}
