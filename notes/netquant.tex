@@ -133,14 +133,22 @@ and compute $M(T_x, R(T_x)$, which can then be aggregated to
 compute $E[M]$. This process is highly parallelisable (each 
 $x$ can be potentially run on a different machine). Thus, we
 propose a distributed verification framework to speed and 
-scale up the queries. The other aspect to investigate is 
-how to partition the set of failures $x \in X$ across
- the machines such that each partition can be computed
- efficiently. This could involve approximations with 
+scale up the queries.  
+
+Given $c$ compute machines, we need to partition
+the set of failures $X$ across
+ the machines. However, the partitions themselves
+ can be large; we cannot enumerate
+ every possible failure scenario in the set. 
+ Thus, we need to partition the set of all failures
+ to form clusters based on the $M$ value 
+ and approximate $E[M]$ with 
  provable guarantees on the distance from the actual 
  value computed for the partition. The other aspect 
  is to leverage the link failure probability function
- $\mu$ to avoid enumerating all possible link failures. 
+ $\mu$ to avoid enumerating all possible link failures.
+ 
+  
 
 \paragraph{Synthesis.} While it is useful for operators
 to compute metrics to validate network design, operators need
