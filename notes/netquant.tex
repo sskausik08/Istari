@@ -100,7 +100,7 @@ MLU in the framework
 would incur an expotential blowup due to the
 enumeration of failure scenarios.
 
-\section{Problem Statement}
+\section{Problem Statement (Old)}
 \paragraph{Input.} We are provided as input a 
 network topology $T=(V,L)$, an adaptive 
 routing strategy $R(T_f)$
@@ -159,9 +159,28 @@ an SLO of 99.99\% availability). Thus, we investigate
 if we can suggest repairs along with the verification computation
 in a distributed manner. 
  
+\section{Identifying Most Likely Most Impacting Failure Scenarios}
+\paragraph{Input.} Routing configurations which can be parsed
+using Batfish/Minesweeper. Link failure probabilities (Note: 
+two link failure probabilities could be dependent) is obtained
+from real-world data. 
+
+\paragraph{Policies.} Use Minesweeper/Batfish/ARC qualitative policies.
+For quantitative policies, we can use traffic matrices distributions 
+(refer to SOL) for checking congestion-freedom under failures. 
+
+\paragraph{Output.} Given a set of policies $P$, let $W(P, T)$ 
+be the penalty incurred by the topology $T$ with the failed links 
+(this metric indicates how many policies are violated in the 
+current network topology). We want to find the top-$l$ failure scenarios
+with probability greater than threshold $\epsilon$ with respect to 
+the penalty incurred under each topology with the failed links ($< k$ link
+failures).
+
 \bibliographystyle{abbrv} 
 \begin{small}
 	\bibliography{refs}
 \end{small}
+
 
 \end{document}

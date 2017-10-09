@@ -1,0 +1,65 @@
+\documentclass[]{article}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xspace}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{cleveref}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usetikzlibrary{calc,automata,positioning}
+\def\istari{\textsc{Istari}\xspace}
+\usepackage{float}
+%opening
+\input{defs}
+\title{Data Plane Reactivity to Failures for WCMP}
+
+\author{Kausik Subramanian, Loris D'Antoni, Aditya Akella}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We investigate data plane reactivity to WCMP under failures.
+\end{abstract}
+
+\section{Introduction}
+In WCMP, a switch splits traffic for a destination based on 
+configured weights (which is implemented by multiple 
+forwarding rules for the same port and using a hashing function
+to choose the ports). 
+These weights are computed by a centralized controller based
+on oversubscription and switch table sizes.
+
+\paragraph{Failures.} When a link failure occurs,
+the switch will simply split the traffic amongst the 
+active links in the configured weights as before, this
+can lead to greater imbalance of traffic along certain 
+links. Between the time of failure and time taken by 
+the WCMP controller to configure new weights, the 
+network throughput can be deteriorated (can perform simple
+simulations to measure this).
+
+\section{Problem Statement}
+In this project, we wish to investigate local data plane
+reactivity mechanisms to failures. For instance, when a 
+switch sees a link failure, if it can modify its weights 
+locally (this however will not necessarily be optimal), we
+could increase the network throughput more than under the 
+failure scenario. 
+
+Only modifying the weights of two switches (ends of the failed link)
+may not yield good returns. We could investigate changes to switches
+$n-$hops from the failed link for better reactivity to the failure. 
+
+\paragraph{Output.} Synthesize data-plane strategies
+for switches to react locally to link failures for WCMP. We can 
+consider a network of P4 switches for this purpose. Strategy-effectiveness
+ can be measured by different metrics - network throughput, number of 
+ congested links etc. 
+
+
+
+\end{document}
