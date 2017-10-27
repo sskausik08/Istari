@@ -1,3 +1,4 @@
+%!TEX root = netquant.tex
 \documentclass[]{article}
 \usepackage{graphicx}
 \usepackage{tikz}
@@ -23,7 +24,7 @@
 
 \begin{abstract}
 We investigate distributed verification and synthesis in 
-networks related to quantitative network policies.
+legacy networks related to quantitative network policies.
 \end{abstract}
 
 \section{Introduction}
@@ -182,5 +183,26 @@ failures).
 	\bibliography{refs}
 \end{small}
 
+\newpage
+\section{Problem Formulation}
+\noindent\paragraph{Input}
+\begin{itemize}
+\item Topology $T = (V, L)$
+\item Set of Traffic Classes: each class is of the form: $<$dstIP, srcRouter, traffic$>$
+\end{itemize}
+\noindent\paragraph{Variables}
+\begin{itemize}
+\item Link Failure Variable $F(r_1, r_2)$ which is set if link $l$ fails.
+\item Control Plane Routes $R(r_1, r_2, p)$ : Route for prefix $p$ from $r_1$ to $r_2$. 
+\begin{equation*}
+\forall p. F(r_1, r_2) \implies \neg R(r_1, r_2, p).valid 
+\end{equation*}
+\item Best Route $R_{best}(r_1, p)$: Decided from all input route metrics based on protocols and priorities. 
+This route is also advertised to peers.
+\item Network Forwarding $Fwd(r_1, r_2, p): R_{best}(r_1, p) == R(r_2, r_1, p) \wedge ACL$
+\item Congestion $C(r_1, r_2) = \sum Fwd(r_1, r_2, p) * Traffic(p)$ 
+\end{itemize}
+
+\noindent\paragraph{Output} Find a link failure scenario ($< k$) such that $\exists r_1, r_2. C(r_1, r_2) > 1$
 
 \end{document}
