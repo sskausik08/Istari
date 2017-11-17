@@ -1,0 +1,274 @@
+%!TEX root = paper.tex
+\documentclass[]{article}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xspace}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{cleveref}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage[utf8]{inputenc}
+\usetikzlibrary{calc,automata,positioning}
+\def\istari{\textsc{Istari}\xspace}
+\usepackage{float}
+%opening
+\input{defs}
+\title{Distributed Verification of Quantitative Network Properties}
+
+\author{Kausik Subramanian, Loris D'Antoni, Aditya Akella}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We investigate distributed verification and synthesis in 
+legacy networks related to quantitative network policies.
+\end{abstract}
+
+\section{Introduction}
+One of the key challenges of designing networks is verifying
+how good the network performs. This is further complicated 
+by the fact that these networks are highly prone to failures
+and variable traffic demands. One of the common failure scenarios
+used to evaluate the network design and strategy is to quantify 
+the relevant metrics like congestion under the occurence  
+of $t$ arbitrary link failures. While this is effective to understand
+the worst-case performance of the network, the probability
+of two links failing need not be uniform, and thus, we would 
+want to estimate the expected value of the metric, given
+link failure probabilities. Similarily, the traffic characteristics
+modelled as a distribution can help us provide a realistic
+metric to evaluate the network, rather than using the tail
+characteristic for worst-case analysis.
+
+\section{Limitations of Existing Work}
+Two works try to answer some of the questions pertaining to
+quantitative properties of the network. In this section, we 
+will describe the approach and their limitations.
+
+\paragraph{Probabilistic NetKAT}
+Probabilistic NetKAT~\cite{probnetkat, probnetkatpopl17} 
+is an extension of NetKAT with support
+for probabilistic routing behaviors, for e.g., a switch 
+can forward traffic to one of its neighbors based on a 
+probability distribution. This can be used to express different
+routing strategies like ECMP, multi-path routing and 
+oblivious TE. The language supports queries 
+on these programs like expected congestion and latency. ProbNetKAT
+handles link failures by modelling the link as a program
+which probabilistically drops a packet (link failure
+probability).
+
+However, the ProbNetKAT language is not powerful enough to 
+express more complex routing strategies which react to failures. 
+The simplest example is a OSPF network, where traffic is 
+forwarded along the shortest weighted path between the endpoints. 
+When a link fails, the network recomputes the paths based on the 
+functioning network topology. ProbNetKAT cannot be used to express
+the OSPF routing strategy. Traffic engineering strategies which adapt 
+to failures to minimize an objective like MPLS tunneling also 
+cannot be expressed using ProbNetKAT. Also, it is not clear 
+if the approaches used in ProbNetKAT scale to larger networks 
+and workloads.
+
+\paragraph{Robust Validation of Network Designs}
+Chang et. al~\cite{robustvalidation} propose a framework 
+to validate network design under failures and uncertain demands. 
+The framework formulates the validation problem as an 
+optimization problem: to find the maximum value a metric can
+achieve under a set of link failure scenarios. An example 
+metric is the Maximum Link Utilisation. Importantly,
+this framework allows the specification of routing strategies
+which adapt based on the current network topology: Multi-commodity
+flow routing and MPLS-style tunneling. 
+
+The limitation of this framework is that it performs a 
+worst-case analysis of the network by finding the maximum value 
+achieved by the metric. For example, if worst-case 
+MLU of the network is $> 1$,
+it means that under a certain set of link failures, the network is
+oversubscribed. However, the occurrence of this particular scenario
+could be highly improbable, and the cost of repairing the 
+over subscription may not be reap significant benefits. 
+Thus, an useful metric
+to validate the network design is to 
+compute expected MLU based on the 
+link failure probability distributions. 
+Computing expected 
+MLU in the framework 
+would incur an exponential blowup due to the
+enumeration of failure scenarios.
+
+\section{Problem Statement (Old)}
+\paragraph{Input.} We are provided as input a 
+network topology $T=(V,L)$, an adaptive 
+routing strategy $R(T_f)$
+parameterized over the current functioning topology $T_f$
+which decides the paths taken by the traffic classes
+in $T_f$. Let us define the 
+set of traffic classes $\Lambda 
+\subseteq V \times V$. For each $\lambda \in \Lambda$,
+we are given a traffic probability 
+distribution function 
+$\omega(\lambda)$
+(discrete or continuous?). To quantify behavior under
+failures, we have a link failure probability function
+$\mu: L \rightarrow [0,1]$. Let us define $X$ to be 
+the set of failure scenarios (bounded by $k$ links).
+
+\paragraph{Output.} Let us define the
+metric $M$ which takes an input a topology and a routing 
+strategy; it returns a 
+real number (for example, max link utilization). 
+The question is as follows: for a given $T$ and $R$,
+can we compute: 
+\[
+	E[M] = \sum_{x \in X} \mu(x). M(T_x, R(T_x))
+\]
+
+\paragraph{Verification Approach.} The naive brute-force 
+approach is to enumerate all link failures $x \in X$
+and compute $M(T_x, R(T_x)$, which can then be aggregated to 
+compute $E[M]$. This process is highly parallelizable (each 
+$x$ can be potentially run on a different machine). Thus, we
+propose a distributed verification framework to speed and 
+scale up the queries.  
+
+Given $c$ compute machines, we need to partition
+the set of failures $X$ across
+ the machines. However, the partitions themselves
+ can be large; we cannot enumerate
+ every possible failure scenario in the set. 
+ Thus, we need to partition the set of all failures
+ to form clusters based on the $M$ value 
+ and approximate $E[M]$ with 
+ provable guarantees on the distance from the actual 
+ value computed for the partition. The other aspect 
+ is to leverage the link failure probability function
+ $\mu$ to avoid enumerating all possible link failures.
+ 
+  
+
+\paragraph{Synthesis.} While it is useful for operators
+to compute metrics to validate network design, operators need
+to repair the network (by changing routing strategies, or 
+provisioning new links) to ensure the metric does not violate
+a certain threshold (for e.g. a cloud provider can provide 
+an SLO of 99.99\% availability). Thus, we investigate 
+if we can suggest repairs along with the verification computation
+in a distributed manner. 
+ 
+\section{Identifying Most Likely Most Impacting Failure Scenarios}
+\paragraph{Input.} Routing configurations which can be parsed
+using Batfish/Minesweeper. Link failure probabilities (Note: 
+two link failure probabilities could be dependent) is obtained
+from real-world data. 
+
+\paragraph{Policies.} Use Minesweeper/Batfish/ARC qualitative policies.
+For quantitative policies, we can use traffic matrices distributions 
+(refer to SOL) for checking congestion-freedom under failures. 
+
+\paragraph{Output.} Given a set of policies $P$, let $W(P, T)$ 
+be the penalty incurred by the topology $T$ with the failed links 
+(this metric indicates how many policies are violated in the 
+current network topology). We want to find the top-$l$ failure scenarios
+with probability greater than threshold $\epsilon$ with respect to 
+the penalty incurred under each topology with the failed links ($< k$ link
+failures).
+
+\bibliographystyle{abbrv} 
+\begin{small}
+	\bibliography{refs}
+\end{small}
+
+\section{Problem Formulation}
+\noindent\paragraph{Input}
+\begin{itemize}
+\item Network Topology $N = (V, L)$: set of routers and links. 
+\item ETGs constructed from network configurations $C$ (OSPF/BGP/Static/ACLs/...)
+\item Set of flows where 
+each flow $f \in FLOWS$ is of the form: $<$flow, srcRouter, dstRouter, traffic$>$\
+\item Link Probability Failures $P_f(r_1, r_2)$
+\end{itemize}
+\noindent\paragraph{Variables}
+\begin{itemize}
+\item Link Failure Variable $F(r_1, r_2)$ which is set to 1 if link $r_1 - r_2$ fails.
+
+\item Best Route $R_{best}(r, f)$: This variable is used to store the shortest route  
+of all input routes received at router $r$ for flow $f$.
+
+\item Network Forwarding $Fwd$: The control plane will decide the next-hop 
+router based on the best route received at a router.  
+$Fwd(r_1, r_2, f)== 1$ implies that router $r_1$ will forward flow $f$ to router $r_2$.
+
+\item Link Congestion $\omega(r_1, r_2)$: Binary variable indicating if a 
+link is congested or not.  
+%We can model Congestion of link $r_1 \rightarrow r_2$ as $C(r_1, r_2) = \frac{}{\sum Fwd(r_1, r_2, p) * Traffic(p)$ 
+\end{itemize}
+
+\noindent\paragraph{Constraints}
+We present the integer linear constraints to verify if the network 
+is congestion-free under $k$ arbitary link failures. This is 
+enforced by the following constraint:
+\begin{equation}
+	\forall r_1, r_2.~(r_1,r_2) \in L. ~\sum_{(r_1, r_2)} F(r_1, r_2) \leq k
+\end{equation}
+
+For a flow $f$, at any vertex $v$ of the ETG, the best route to the
+destination will the shortest active path through of its neighbors ($N(v,f)$).
+We can inductively express this as: 
+\begin{equation}
+	\forall n \in N(v,f).~ R_{best}(v, f) \leq R_{best} (n, f) + W(v, n, f) + \infty \times F(v,n) 
+\end{equation}
+where $W(v,n,f)$ denotes the ETG edge weight and $\infty$ is a large constant. These
+constraints ensure $R_{best}(v, f)$ is the smallest of all the active routes at $v$.
+
+The constructed ETG have the following property: forwarding happens along the
+active shortest path. Thus, forwarding will happen along the link which sends
+the best advertisement (shortest in this case). This is expressed as follows:
+\begin{equation}
+	\forall n \in N(v,f). ~R_{best}(v,f) + \infty \times (1 - Fwd(v,n,f)) \geq R_{best} (n, f) + W(v, n, f)
+\end{equation}
+These constraints ensure that $Fwd(v,n,f)$ is 1 along the best path.
+
+Since forwarding cannot happen along failed links, we add the following 
+constraints to ensure correct forwarding semantics:
+\begin{equation}
+\forall n \in N(v,f).~Fwd(v,n,f) + F(v,n) \leq 1 
+\end{equation}
+Thus, if link $v-n$ is failed, flow $f$ will not be forwarded through the link.
+
+\noindent\paragraph{Output} 
+To check for congestion, we first add the following constraints for 
+each link to indicate congestion when utilization exceeds capacity: 
+\begin{equation}
+\forall (r_1, r_2) \in L. ~~\frac{\sum_{f \in F} Fwd(r_1, r_2, f) * TC(f)}{Cap(r_1, r_2)} - \omega(r_1, r_2) \geq 0
+\end{equation}
+Thus, if traffic on link does not exceed capacity of the link, the congestion value
+omega will be 0. Also, if $\omega$ is 1, then the link has to be congested. Therefore,
+to check for a particular link congestion, we can have the objective as:
+\[
+\texttt{maximize} ~~\omega(r_1, r_2)
+\]	
+To find if any link in the network can become congested, we can add the following
+objective:
+\[
+\texttt{maximize} ~~\sum_{\forall (r_1,r_2) \in L} \omega(r_1, r_2)
+\]
+
+
+\textbf{Most Likely Critical Event}: We modify our question of congestion from above to
+incorporate failure probabilities for link failure scenarios $(r_1, r_1'),\ldots(r_{k-1}, r_{k-1}')$ : 
+\[
+\texttt{maximize} (P_f(r_1,r_1') *\ldots P_f(r_{k-1}, r_{k-1}')). 
+~~\exists r_1, r_2. \omega(r_1, r_2) = 1
+\]
+Product can be expressed as a sum of logarithms of probabilities to ensure the objective is linear. 
+
+%\input{quant-hardness}
+
+\end{document}

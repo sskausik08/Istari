@@ -1,0 +1,16 @@
+%!TEX root = paper.tex
+\begin{theorem}
+Given a topology $T = (R, L)$, the ARC, the set of  
+traffic characteristics $\{tc \in TC | tc \in IP \times R \times R \times \nat\}$ and 
+$(L_f, \fail)$ where $L_f \subseteq L$ denotes the subset of links 
+which can potentially fail and $\fail$ denotes the number of links which have failed,
+the problem of finding a set of links $\links \subseteq L_f$ such that $|\links| = \fail$
+and there exists a link $l \in L \setminus \links$ where the sum of flows exceeds capacity of the link $l$
+\end{theorem}
+
+\begin{proof}
+We show that the Hamiltonian path problem, which is NP-complete reduces to the
+quantitative verification problem under failures. The latter is also in NP, so after the reduction we 
+ can conclude that it is also NP-complete.
+ 
+\end{proof} 
