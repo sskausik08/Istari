@@ -16,7 +16,7 @@
 \usepackage{float}
 %opening
 \input{defs}
-\title{Distributed Verification of Quantitative Network Properties}
+\title{Verification of Quantitative Network Properties}
 
 \author{Kausik Subramanian, Loris D'Antoni, Aditya Akella}
 
@@ -25,167 +25,47 @@
 \maketitle
 
 \begin{abstract}
-We investigate distributed verification and synthesis in 
+In this work, we are exploring distributed verification and repair in 
 legacy networks related to quantitative network policies.
 \end{abstract}
 
 \section{Introduction}
-One of the key challenges of designing networks is verifying
-how good the network performs. This is further complicated 
-by the fact that these networks are highly prone to failures
-and variable traffic demands. One of the common failure scenarios
-used to evaluate the network design and strategy is to quantify 
-the relevant metrics like congestion under the occurence  
-of $t$ arbitrary link failures. While this is effective to understand
-the worst-case performance of the network, the probability
-of two links failing need not be uniform, and thus, we would 
-want to estimate the expected value of the metric, given
-link failure probabilities. Similarily, the traffic characteristics
-modelled as a distribution can help us provide a realistic
-metric to evaluate the network, rather than using the tail
-characteristic for worst-case analysis.
+One of the key challenges of designing networks is verifying how good the network performs. This is further complicated by the fact that these networks are highly prone to failures and variable traffic demands. One of the common failure scenarios used to evaluate the network design and strategy is to quantify the relevant metrics like congestion under the occurrence  of k arbitrary link failures. While this is effective to understand the worst-case performance of the network, the probability of two links failing need not be uniform, and thus, we would want to estimate the expected value of the metric, given link failure probabilities. Similarly, the traffic characteristics modeled as a distribution can help us provide a realistic metric to evaluate the network, rather than using the tail characteristic for worst-case analysis. 
 
 \section{Limitations of Existing Work}
-Two works try to answer some of the questions pertaining to
-quantitative properties of the network. In this section, we 
-will describe the approach and their limitations.
+Two works try to answer some of the questions pertaining to quantitative properties of the network. In this section, we will describe the approach and their limitations.
+Probabilistic NetKAT~\cite{probnetkat} is an extension of NetKAT with support for probabilistic routing behaviors, for e.g., a switch can forward traffic to one of its neighbors based on a probability distribution. This can be used to express different routing strategies like ECMP, multi-path routing and oblivious TE. The language supports queries on these programs like expected congestion and latency. ProbNetKAT handles link failures by modeling the link as a program which probabilistically drops a packet (link failure probability). However, the ProbNetKAT language is not powerful enough to express more complex routing strategies which react to failures. The simplest example is a OSPF network, where traffic is forwarded along the shortest weighted path between the endpoints. When a link fails, the network recomputes the paths based on the functioning network topology. ProbNetKAT cannot be used to express the OSPF routing strategy. Traffic engineering strategies which adapt to failures to minimize an objective like MPLS tunneling also cannot be expressed using ProbNetKAT. Also, it is not clear if the approaches used in ProbNetKAT scale to larger networks and workloads.
 
-\paragraph{Probabilistic NetKAT}
-Probabilistic NetKAT~\cite{probnetkat, probnetkatpopl17} 
-is an extension of NetKAT with support
-for probabilistic routing behaviors, for e.g., a switch 
-can forward traffic to one of its neighbors based on a 
-probability distribution. This can be used to express different
-routing strategies like ECMP, multi-path routing and 
-oblivious TE. The language supports queries 
-on these programs like expected congestion and latency. ProbNetKAT
-handles link failures by modelling the link as a program
-which probabilistically drops a packet (link failure
-probability).
 
-However, the ProbNetKAT language is not powerful enough to 
-express more complex routing strategies which react to failures. 
-The simplest example is a OSPF network, where traffic is 
-forwarded along the shortest weighted path between the endpoints. 
-When a link fails, the network recomputes the paths based on the 
-functioning network topology. ProbNetKAT cannot be used to express
-the OSPF routing strategy. Traffic engineering strategies which adapt 
-to failures to minimize an objective like MPLS tunneling also 
-cannot be expressed using ProbNetKAT. Also, it is not clear 
-if the approaches used in ProbNetKAT scale to larger networks 
-and workloads.
+Robust Validation of Network Designs: Chang et. al.~\cite{robustvalidation} propose a framework to validate network design under failures and uncertain demands. The framework formulates the validation problem as an optimization problem: to find the maximum value a metric can achieve under a set of link failure scenarios. An example metric is the Maximum Link Utilization. Importantly, this framework allows the specification of routing strategies which adapt based on the current network topology: Multi-commodity flow routing and MPLS-style tunneling. The limitation of this framework is that it performs a worst-case analysis of the network by finding the maximum value achieved by the metric. For example, if worst-case MLU of the network is > 1, it means that under a certain set of link failures, the network is oversubscribed. However, the occurrence of this particular scenario could be highly improbable, and the cost of repairing the over-subscription may not be reap significant benefits. Thus, an useful metric to validate the network design is to compute expected MLU based on the link failure probability distributions. Computing expected MLU in the framework would incur an exponential blowup due to the enumeration of failure scenarios.
 
-\paragraph{Robust Validation of Network Designs}
-Chang et. al~\cite{robustvalidation} propose a framework 
-to validate network design under failures and uncertain demands. 
-The framework formulates the validation problem as an 
-optimization problem: to find the maximum value a metric can
-achieve under a set of link failure scenarios. An example 
-metric is the Maximum Link Utilisation. Importantly,
-this framework allows the specification of routing strategies
-which adapt based on the current network topology: Multi-commodity
-flow routing and MPLS-style tunneling. 
 
-The limitation of this framework is that it performs a 
-worst-case analysis of the network by finding the maximum value 
-achieved by the metric. For example, if worst-case 
-MLU of the network is $> 1$,
-it means that under a certain set of link failures, the network is
-oversubscribed. However, the occurrence of this particular scenario
-could be highly improbable, and the cost of repairing the 
-over subscription may not be reap significant benefits. 
-Thus, an useful metric
-to validate the network design is to 
-compute expected MLU based on the 
-link failure probability distributions. 
-Computing expected 
-MLU in the framework 
-would incur an exponential blowup due to the
-enumeration of failure scenarios.
+Minesweeper~\cite{minesweeper} is a general approach to verification for “legacy” networks running distributed protocols like OSPF and BGP. It models the control plane interaction as logical constraints and uses SMT solvers to verify properties on the network like reachability, local equivalence etc. Minesweeper however is geared towards answering properties on a single traffic class, and do not tackle hyperproperties. Another framework is ARC~\cite{arc} which performs fast control plane analysis using a weighted graph representation, by which, it is able to encode network behavior under failures by ensuring that the path is the shortest in the graph. One of the limitations of ARC is that it cannot tackle all configuration constructs to create its weighted-graph representation. Both Minesweeper and ARC do not support verification of quantitative properties.
 
-\section{Problem Statement (Old)}
-\paragraph{Input.} We are provided as input a 
-network topology $T=(V,L)$, an adaptive 
-routing strategy $R(T_f)$
-parameterized over the current functioning topology $T_f$
-which decides the paths taken by the traffic classes
-in $T_f$. Let us define the 
-set of traffic classes $\Lambda 
-\subseteq V \times V$. For each $\lambda \in \Lambda$,
-we are given a traffic probability 
-distribution function 
-$\omega(\lambda)$
-(discrete or continuous?). To quantify behavior under
-failures, we have a link failure probability function
-$\mu: L \rightarrow [0,1]$. Let us define $X$ to be 
-the set of failure scenarios (bounded by $k$ links).
 
-\paragraph{Output.} Let us define the
-metric $M$ which takes an input a topology and a routing 
-strategy; it returns a 
-real number (for example, max link utilization). 
-The question is as follows: for a given $T$ and $R$,
-can we compute: 
+\section{Problem Statement}
+Quantitative properties under failures for networks running legacy configurations:
+Given a network N, set of network configurations C, traffic characteristics for a set of traffic classes T, and a set of failures F,  we want to answer questions of the form: 
 \[
-	E[M] = \sum_{x \in X} \mu(x). M(T_x, R(T_x))
+Q(N, C, T, F)
 \]
+Quantitative properties Q to consider:
+\begin{itemize} 
+\item Congestion-freeness: Under any arbitrary k link failures, is the network congestion-free, i.e., flows do not exceed any link’s maximum capacity.
+\item Latency-Inflation: Under any arbitrary k failures, is latency bounded for every flow? We can model latency by hop-counts. Making latency load-aware would be interesting, but difficult to model and verify.
+\item Rate-limiting: Verify if in-network rate-limiting is performed correctly even under failures.
+\end{itemize}
+We assume here that failures have uniform probability distributions (second question uses the actual probabilities). Thus, we need to explore potentially exponential failure scenarios, we plan to investigate distributed verification by first clustering the failure events and exploring these clusters in parallel. 
 
-\paragraph{Verification Approach.} The naive brute-force 
-approach is to enumerate all link failures $x \in X$
-and compute $M(T_x, R(T_x)$, which can then be aggregated to 
-compute $E[M]$. This process is highly parallelizable (each 
-$x$ can be potentially run on a different machine). Thus, we
-propose a distributed verification framework to speed and 
-scale up the queries.  
+\subsection{Identifying Most Likely Most Impacting Failure Scenarios}
+Given a set of policies, let the weight function W be the penalty incurred by the topology N due to policy violations. We want to find the top-L failure scenarios with probability greater than threshold  with respect to the penalty incurred under each topology with the failed links (< k link failures). Here, we can use the link failure probabilities to find critical link failure events which cause the most violation of intents. Ideally, our approach should be general enough for independent probability distributions (i.e., failure of a link does not affect another link’s failure probability) and correlated failure probability distributions (i.e., link failures depend on each other. A node failure can be treated as a special case of correlated link failure where all links connected to a node will fail). 
 
-Given $c$ compute machines, we need to partition
-the set of failures $X$ across
- the machines. However, the partitions themselves
- can be large; we cannot enumerate
- every possible failure scenario in the set. 
- Thus, we need to partition the set of all failures
- to form clusters based on the $M$ value 
- and approximate $E[M]$ with 
- provable guarantees on the distance from the actual 
- value computed for the partition. The other aspect 
- is to leverage the link failure probability function
- $\mu$ to avoid enumerating all possible link failures.
- 
-  
+\subsection{Short-term and Long-term Repair}
+While quantitative verification is important to understand the network behavior under failures, it does not provide solutions for the network operator. Thus, it is crucial to use the verification insights to suggest changes to the network configuration. We intend to investigate two types of network repair: One geared towards short-term traffic characteristics (can use spikes in traffic) by changing routing configurations to improve network resilience.  Using long-term traffic characteristics, we would propose changes to network topology (adding new links, upgrading link capacities) to ensure the network behaves smoothly under a bounded number of failures.
 
-\paragraph{Synthesis.} While it is useful for operators
-to compute metrics to validate network design, operators need
-to repair the network (by changing routing strategies, or 
-provisioning new links) to ensure the metric does not violate
-a certain threshold (for e.g. a cloud provider can provide 
-an SLO of 99.99\% availability). Thus, we investigate 
-if we can suggest repairs along with the verification computation
-in a distributed manner. 
- 
-\section{Identifying Most Likely Most Impacting Failure Scenarios}
-\paragraph{Input.} Routing configurations which can be parsed
-using Batfish/Minesweeper. Link failure probabilities (Note: 
-two link failure probabilities could be dependent) is obtained
-from real-world data. 
+\section{Preliminary Approach}
+We want to leverage the weighted-graph abstract representation of the control plane introduced in ARC as a starting point. Building on ARC, we want to formulate ILP constraints to verify quantitative properties dealing with multiple traffic classes. This will be augmented with real-world failure probability and traffic characteristics to perform more accurate verification. We formulate an initial model of the problem next.
 
-\paragraph{Policies.} Use Minesweeper/Batfish/ARC qualitative policies.
-For quantitative policies, we can use traffic matrices distributions 
-(refer to SOL) for checking congestion-freedom under failures. 
-
-\paragraph{Output.} Given a set of policies $P$, let $W(P, T)$ 
-be the penalty incurred by the topology $T$ with the failed links 
-(this metric indicates how many policies are violated in the 
-current network topology). We want to find the top-$l$ failure scenarios
-with probability greater than threshold $\epsilon$ with respect to 
-the penalty incurred under each topology with the failed links ($< k$ link
-failures).
-
-\bibliographystyle{abbrv} 
-\begin{small}
-	\bibliography{refs}
-\end{small}
-
-\section{Problem Formulation}
 \noindent\paragraph{Input}
 \begin{itemize}
 \item Network Topology $N = (V, L)$: set of routers and links. 
@@ -212,7 +92,7 @@ link is congested or not.
 
 \noindent\paragraph{Constraints}
 We present the integer linear constraints to verify if the network 
-is congestion-free under $k$ arbitary link failures. This is 
+is congestion-free under $k$ arbitrary link failures. This is 
 enforced by the following constraint:
 \begin{equation}
 	\forall r_1, r_2.~(r_1,r_2) \in L. ~\sum_{(r_1, r_2)} F(r_1, r_2) \leq k
@@ -270,5 +150,10 @@ incorporate failure probabilities for link failure scenarios $(r_1, r_1'),\ldots
 Product can be expressed as a sum of logarithms of probabilities to ensure the objective is linear. 
 
 %\input{quant-hardness}
+
+\bibliographystyle{abbrv} 
+\begin{small}
+	\bibliography{refs}
+\end{small}
 
 \end{document}
