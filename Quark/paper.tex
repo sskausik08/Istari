@@ -140,6 +140,28 @@ objective:
 \texttt{maximize} ~~\sum_{\forall (r_1,r_2) \in L} \omega(r_1, r_2)
 \]
 
+\textbf{Imposing constraints on Input Traffic}: We modify our formulation to
+impose linear constraints on the source traffic. For instance, each tenant may be
+given a particular network bandwidth budget which can be distributed amongst the 
+tenant's flows. 
+We introduce two sets of variables: (1) $T(pc)$: Indicates traffic budget sent by traffic 
+class $pc$, and (2) $t(r_1, r_2, pc)$: Indicates the traffic for $pc$ on edge 
+$r_1 \rightarrow r_2$.
+
+For all edges in the ETG, traffic must not exceed the traffic budget of the traffic class.
+\begin{equation*}
+	\forall r_1, r_2. ~~t(r_1, r_2, pc) \leq T(pc)
+\end{equation*}
+Traffic on a link cannot be non-zero if traffic is not forwarded through the link. Thus, 
+if $Fwd(r_1,r_2,pc)=0$, then $t(r_1, r_2, pc)$ must also be equal to zero.
+\begin{equation*}
+	\forall r_1, r_2. ~~\infty \times Fwd(r_1, r_2, pc) \geq t(r_1, r_2, pc)
+\end{equation*}
+We can modify congestion constraints to indicate sum of $t$ for a link over traffic classes
+to compute link utilization. Linear constraints on traffic budgets can be expressed over 
+$T$ variables. Note that, congestion can occur by not using the entire budget ($t \leq T$), 
+these constraints does not sacrifice soundness or completeness. 	
+
 
 \textbf{Most Likely Critical Event}: We modify our question of congestion from above to
 incorporate failure probabilities for link failure scenarios $(r_1, r_1'),\ldots(r_{k-1}, r_{k-1}')$ : 

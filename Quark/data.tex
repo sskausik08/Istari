@@ -1,0 +1,64 @@
+%!TEX root = data.tex
+\documentclass[]{article}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xspace}
+\usepackage{enumitem}
+\usepackage{mathtools}
+\usepackage{cleveref}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage[utf8]{inputenc}
+\usetikzlibrary{calc,automata,positioning}
+\def\istari{\textsc{Istari}\xspace}
+\usepackage{float}
+%opening
+\input{defs}
+\title{Data for Verification of Quantitative Network Properties}
+
+\author{Kausik Subramanian}
+
+\begin{document}
+
+\maketitle
+
+\section{Network and Configuration Data}
+\begin{itemize}
+\item The Microsoft datacenter configurations used in ARC~\cite{arc}.
+\item Bandwidth capacity of the network links.
+\end{itemize}
+
+\section{Traffic Data Format}
+\begin{itemize}
+	\item Traffic matrix $T$ of all Source-Destination IP pairs where $T_{ij}$ = traffic rate
+	from source $i$ to destination $j$. For each pair, we would need the ingress router and egress
+	router (though we could reconstruct this from the configurations). 
+	\item Multiple traffic matrices (due to traffic variations) could also be used in the analysis. 
+	If actual packet traces exist with the following data, we could construct the traffic matrices
+	from the data: 
+	\begin{center}
+	Timestamp $|$ Source IP $|$ Destination IP $|$ Ingress Edge Router $|$ Egress Edge Router $|$ Packet Size
+	\end{center}
+\end{itemize}
+
+\section{Failure Data}
+\begin{itemize}
+	\item Individual Link Failure Data to compute link failure probabilities: 
+	\begin{center}
+	Link $|$ Time link was down in a time period (day/week/month)
+	\end{center}
+	\item Link failure correlations: Links whose failure depends on other links' failures, 
+	if such correlations exist.
+\end{itemize}
+
+	
+
+
+\bibliographystyle{abbrv} 
+\begin{small}
+	\bibliography{refs}
+\end{small}
+
+\end{document}
