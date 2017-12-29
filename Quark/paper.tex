@@ -122,6 +122,28 @@ constraints to ensure correct forwarding semantics:
 \end{equation}
 Thus, if link $v-n$ is failed, flow $f$ will not be forwarded through the link.
 
+\noindent\paragraph{Alternate Constraints}
+\begin{equation}
+	\forall v \in V \setminus \{s,t\}.~\sum_{in(e)} Fwd(e) = \sum_{out(e)} Fwd(e)
+\end{equation}
+At  the source, sum of Fwd for the outgoing edges must be 1, 
+and similarly, sum of Fwd 
+incoming edges at the destination is 1.
+
+Since forwarding cannot happen along failed links, we add the following 
+constraints to ensure correct forwarding semantics:
+\begin{equation}
+\forall n \in N(v,f).~Fwd(v,n,f) + F(v,n) \leq 1 
+\end{equation}
+Thus, if link $v-n$ is failed, flow $f$ will not be forwarded through the link.
+
+To find the shortest paths for each ETG, we add the following 
+objective:
+\begin{equation}
+\forall f \in F. ~\forall (r_1, r_2) \in L. ~~\texttt{min} \sum Fwd(r_1, r_2, f) * W(r_1, r_2, f)
+\end{equation}
+
+
 \noindent\paragraph{Output} 
 To check for congestion, we first add the following constraints for 
 each link to indicate congestion when utilization exceeds capacity: 
